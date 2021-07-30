@@ -14,8 +14,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:token')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('token')->group(function () {
+    Route::get('user', function () {
+        return response()->json(1);
+    })->name('user');
+    Route::post('create-access-token',[\App\Http\Controllers\AccessTokenController::class,'create']);
+    Route::post('delete-access-token',[\App\Http\Controllers\AccessTokenController::class,'delete']);
 });
 
-Route::post('/login',[\App\Http\Controllers\AuthController::class,'login'])->name('login');
+Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login'])->name('login');
+Route::post('/register', [\App\Http\Controllers\AuthController::class, 'register'])->name('register');

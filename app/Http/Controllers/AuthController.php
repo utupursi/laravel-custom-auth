@@ -4,133 +4,67 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Request\LoginRequest;
-use App\Http\Requests\RegisterRequest;
+use App\Http\Request\RegisterRequest;
 use App\Models\User;
-use App\Services\AuthService;
+use App\Repositories\AuthRepositoryInterface;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Psy\Util\Json;
 
 
 class AuthController extends Controller
 {
-    protected $service;
+    protected $authRepository;
 
-//    public function __construct(AuthService $service)
-//    {
-//        $this->service = $service;
-//    }
-    /**
-     * Show specified view.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
-     */
-    public function loginView()
+    public function __construct(AuthRepositoryInterface $authRepository)
     {
-
-        if (Auth::user() && Auth::user()->can('isAdmin')) {
-            return redirect()->route('adminHome', app()->getLocale());
-        } else {
-            if (Auth::user()) {
-                return redirect()->route('welcome', app()->getLocale());
-            } else {
-                return view('admin.auth.login');
-            }
-        }
+        $this->authRepository = $authRepository;
     }
+
 
     /**
      * Authenticate login user.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param LoginRequest $request
      *
-     * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Validation\ValidationException
+     * @return JsonResponse
      */
     public function login(Request $request)
     {
+        $rules = ['email' => 'required|string','password' => 'required|string'];
+        $validator = Validator::make($request->all(), $rules);
 
-        $credentials = [
-            'username' => $request->post('email'),
-            'password' => $request->post('password'),
-        ];
-
-        if (!Auth::guard('token')->validate($credentials)) {
-//            return Auth::guard('token')->validate($credentials);
-            return response()->json('no');
+        if ($validator->fails()) {
+            return response()->json(['success' => 'false', 'message' => $validator->messages()], 422);
         }
 
-
-        $user=Auth::guard('token')->user()->id;
-        return $user;
-//        $user->createToken()
-
-
-
-//        if (Auth::user()->status == 0) {
-//            Auth::logout();
-//            return redirect()->route('login-view', app()->getLocale());
-//        }
-
-        return response()->json('yes');
-
+        return $this->authRepository->login($request);
     }
-    // Facebook Sociallite
-//    public function facebook(){
-//        return Socialite::driver('facebook')->redirect();
-//    }
-//    public function facebookredirect()
-//    {
-//        $user = Socialite::driver('facebook')->stateless()->user() ?? null;
-//        if ($user) {
-//            $user = User::firstOrCreate([
-//                'email' => $user->email
-//            ], [
-//                'name' => $user->name,
-//                'email' => $user->email,
-//                'password' => Hash::make(Str::random(24)),
-//                'status' => 1
-//            ]);
-//            Auth::login($user);
-//        }
-//        return redirect(route('welcome',app()->getLocale()));
-//    }
-    // Google Sociallite
-//    public function google(){
-//        return Socialite::driver('google')->redirect();
-//    }
-//    public function googleredirect()
-//    {
-//
-//        $user = Socialite::driver('google')->user();
-//        $user = User::firstOrCreate([
-//            'email' => $user->email
-//        ], [
-//            'name' => $user->name,
-//            'email' => $user->email,
-//            'password' => Hash::make(Str::random(24)),
-//            'status' => 1
-//        ]);
-//        Auth::login($user);
-//        return redirect(route('welcome',app()->getLocale()));
-//    }
 
-    public function register($locale, RegisterRequest $request)
+    /**
+     *  Register user.
+     *
+     * @param RegisterRequest $request
+     *
+     * @return JsonResponse
+     */
+
+    public function register(Request $request)
     {
-        $data = $request->only([
-            'first_name',
-            'last_name',
-            'email',
-            'password',
-        ]);
-        $this->service->store($locale, $data);
-        return redirect(route('welcome', app()->getLocale()));
+        $rules = ['name' => 'required|string', 'email' => 'required|string|unique:users', 'password' => 'required|string'];
+        $validator = Validator::make($request->all(), $rules);
 
+        if ($validator->fails()) {
+            return response()->json(['success' => 'false', 'message' => $validator->messages()], 422);
+        }
+
+        return $this->authRepository->register($request);
     }
 
     /**
@@ -172,23 +106,6 @@ class AuthController extends Controller
             $user->delete();
         }
         return redirect()->route('welcome', app()->getLocale());
-    }
-
-    public function facebookAuth()
-    {
-        return Socialite::driver('facebook')->redirect();
-    }
-
-    public function facebookCallback()
-    {
-
-    }
-
-
-    public function facebookDataDeletionCallback(Request $request)
-    {
-        $data = ['url' => "iop", 'confirmation_code' => 'success'];
-        return response()->json($data);
     }
 
 
