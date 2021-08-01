@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use App\Guards\CustomAuthGuard;
+use App\Models\User;
+use App\Models\UserToken;
+use App\Policies\UserPolicy;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -15,6 +19,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array
      */
     protected $policies = [
+        User::class => UserPolicy::class,
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
     ];
 
@@ -36,6 +41,13 @@ class AuthServiceProvider extends ServiceProvider
         Auth::extend('access_token', function ($app, $name, array $config) {
             return new CustomAuthGuard(Auth::createUserProvider($config['provider']), $app->make('request'));
         });
+
+        // Define gate to determine if user verified
+        Gate::define('isVerified', function (User $user) {
+            return $user->is_verified;
+        });
+
+
         //
     }
 }

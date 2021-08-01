@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -32,16 +33,30 @@ class AccessTokenRepository extends BaseRepository implements AccessTokenReposit
      */
     public function create(Request $request)
     {
-        $this->model->create([
-            'access_token' => $request['access_token'],
-            'expires_at' => Carbon::now()->addDays(30)->format('Y-m-d h:i:s'),
-            'user_id' => $request->bearer->user_id
-        ]);
+        DB::beginTransaction();
 
+        $model = $this->model->where(['user_id' => $request->bearer->user_id])->delete();
+
+        if ($model) {
+            $userToken = $this->model->create([
+                'access_token' => $request['access_token'],
+                'expires_at' => Carbon::now()->addDays(30)->format('Y-m-d h:i:s'),
+                'user_id' => $request->bearer->user_id
+            ]);
+            if ($userToken) {
+                DB::commit();
+                return response()->json(
+                    [
+                        'success' => 'true',
+                        'message' => 'Access token was successfully saved'
+                    ]);
+            }
+        }
+        DB::rollBack();
         return response()->json(
             [
                 'success' => 'true',
-                'message' => 'Access token was successfully saved'
+                'message' => 'Access token was not saved'
             ]);
     }
 
@@ -53,7 +68,7 @@ class AccessTokenRepository extends BaseRepository implements AccessTokenReposit
      */
     public function delete(Request $request)
     {
-        $userToken = $this->model->where(['access_token' => $request['access_token']]);
+        $userToken = $this->model->where(['access_token' => $request['access_token']])->first();
         if ($userToken) {
             $userToken->delete();
             return response()->json([

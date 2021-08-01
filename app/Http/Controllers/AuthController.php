@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Request\LoginRequest;
 use App\Http\Request\RegisterRequest;
 use App\Models\User;
+use App\Models\UserToken;
 use App\Repositories\AuthRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -37,7 +38,7 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $rules = ['email' => 'required|string','password' => 'required|string'];
+        $rules = ['email' => 'required|string', 'password' => 'required|string'];
         $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
@@ -86,25 +87,14 @@ class AuthController extends Controller
         return redirect()->route('login-view', app()->getLocale());
     }
 
-    public function verify($locale, $token)
+    public function verifyToken(Request $request)
     {
-        $data = explode('|', $token);
-        $user = User::findOrFail($data[0]);
-        if ($user->status == 1 || Auth::user()) {
-            return redirect()->route('welcome', app()->getLocale());
+        $token = UserToken::where(['access_token' => $request['token']])->where('expires_at', '>=', Carbon::now()->format('Y-m-d h:i:s'))->first();
+        if ($token) {
+            return response()->json(['success' => 'true', 'message' => 'Valid token']);
         }
-        $tokens = $user->tokens()->where('validate_till', '>=', Carbon::now())->get();
-        if (count($tokens) > 0) {
-            foreach ($tokens as $item) {
-                if (Hash::check($data[1], $item->token)) {
-                    $user->status = 1;
-                    $user->save();
-                    break;
-                }
-            }
-        } else {
-            $user->delete();
-        }
+        return response()->json(['success' => 'false', 'message' => 'Invalid token']);
+
         return redirect()->route('welcome', app()->getLocale());
     }
 

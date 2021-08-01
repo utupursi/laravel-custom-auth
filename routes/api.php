@@ -22,5 +22,6 @@ Route::middleware('token')->group(function () {
     Route::post('delete-access-token',[\App\Http\Controllers\AccessTokenController::class,'delete']);
 });
 
+Route::post('/verifyToken', [\App\Http\Controllers\AuthController::class, 'verifyToken']);
 Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login'])->name('login');
 Route::post('/register', [\App\Http\Controllers\AuthController::class, 'register'])->name('register');

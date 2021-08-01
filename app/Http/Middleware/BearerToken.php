@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use App\Models\UserToken;
 use Carbon\Carbon;
 use Closure;
@@ -18,14 +19,22 @@ class BearerToken
      */
     public function handle(Request $request, Closure $next)
     {
-        $bearer = UserToken::where(['access_token' => $request->bearerToken()])
-            ->where('expires_at', '>=', Carbon::now()->format('Y-m-d h:i:s'))
-            ->first();
+        if ($request->get('token')) {
+            $token = UserToken::where(['access_token' => $request->get('token')])
+                ->where('expires_at', '>=', Carbon::now()->format('Y-m-d h:i:s'))
+                ->first();
+        } else {
+            $token = UserToken::where(['access_token' => $request->bearerToken()])
+                ->where('expires_at', '>=', Carbon::now()->format('Y-m-d h:i:s'))
+                ->first();
+        }
 
-        if ($bearer) {
-            $request->merge(['bearer' => $bearer]);
+        if ($token) {
+            $user = User::find($token->user_id);
+            $request->merge(['bearer' => $token, 'user' => $user]);
             return $next($request);
         }
+
 
         return response()->json([
             'success' => 'false',
