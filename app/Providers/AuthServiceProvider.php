@@ -19,7 +19,6 @@ class AuthServiceProvider extends ServiceProvider
      * @var array
      */
     protected $policies = [
-        User::class => UserPolicy::class,
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
     ];
 
@@ -48,6 +47,10 @@ class AuthServiceProvider extends ServiceProvider
         });
 
 
-        //
+        // Define gate to determine is user is owner of deleted access token
+        Gate::define('isOwner', function (User $user, UserToken $userToken) {
+            return $userToken->user_id == $user->id;
+        });
+
     }
 }

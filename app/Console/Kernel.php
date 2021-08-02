@@ -25,9 +25,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-//        $schedule->job(new DeleteExpiredTokens())->everyMinute();
-        $schedule->command('users:delete_expired_tokens')->everyMinute();
-        // $schedule->command('inspire')->hourly();
+        $schedule->command('users:delete_expired_tokens')->hourly();
     }
 
     /**

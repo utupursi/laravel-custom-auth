@@ -68,24 +68,6 @@ class AuthController extends Controller
         return $this->authRepository->register($request);
     }
 
-    /**
-     * Logout user.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function logout(Request $request)
-    {
-
-        if (Auth::user()) {
-            Auth::logout();
-
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-        }
-        return redirect()->route('login-view', app()->getLocale());
-    }
 
     public function verifyToken(Request $request)
     {

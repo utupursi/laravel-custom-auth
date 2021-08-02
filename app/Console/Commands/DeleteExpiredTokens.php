@@ -39,9 +39,11 @@ class DeleteExpiredTokens extends Command
      */
     public function handle()
     {
-        $userToken = UserToken::where('expires_at', '<=', Carbon::now()->format('Y-m-d h:i:s'));
+        $userToken = UserToken::where('expires_at', '<=', Carbon::now()->format('Y-m-d h:i:s'))->delete();
         if ($userToken) {
-            $userToken->delete();
+            $this->info('Expired tokens was successfully deleted');
+        } else {
+            $this->error('Expired tokens was not deleted');
         }
     }
 }

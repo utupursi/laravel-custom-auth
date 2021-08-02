@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use App\Http\Middleware\BearerToken;
+use App\Http\Middleware\LogAuthorisedRequest;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -45,8 +46,9 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
-        'token'=>[
-            BearerToken::class
+        'token' => [
+            BearerToken::class,
+            LogAuthorisedRequest::class,
         ]
     ];
 

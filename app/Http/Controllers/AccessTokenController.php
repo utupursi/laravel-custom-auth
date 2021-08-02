@@ -31,16 +31,15 @@ class AccessTokenController extends Controller
     }
 
     /**
-     *  Register user.
+     *  Create access token
      *
-     * @param RegisterRequest $request
+     * @param Request $request
      *
      * @return JsonResponse
      */
 
     public function create(Request $request)
     {
-        $userToken = UserToken::where(['user_id' => $request->bearer->user_id])->first();
 
         $user = User::find($request->bearer->user_id);
 
@@ -58,15 +57,25 @@ class AccessTokenController extends Controller
         return $this->accessTokenRepository->create($request);
     }
 
+    /**
+     *  Delete access token
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
     public function delete(Request $request)
     {
         $user = User::find($request->bearer->user_id);
-        return $user->can('check');
-        if ($user->cannot('checkOwner', $request->post('access_token'))) {
-            return response()->json(
-                [
-                    'success' => 'false', 'message' => 'you are not owner of this token'
-                ]);
+
+        $userToken = UserToken::where(['access_token' => $request['access_token']])->first();
+
+        if (!$userToken) {
+            return response()->json(['success' => 'false', 'message' => "Token was not found"], 422);
+        }
+
+        if (!Gate::forUser($user)->allows('isOwner', $userToken)) {
+            return response()->json(['success' => 'false', 'message' => "You are not owner of this access token"], 422);
         }
 
         $rules = ['access_token' => 'required|string'];

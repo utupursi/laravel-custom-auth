@@ -60,7 +60,7 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
     }
 
     /**
-     * Create Feature item into db.
+     * Register user
      *
      * @param RegisterRequest $request
      * @return JsonResponse
@@ -84,6 +84,7 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
             if ($userToken) {
                 DB::commit();
                 return response()->json([
+                    'access_token' => $token,
                     'success' => 'true',
                     'message' => 'User was successfully created',
                 ]);
@@ -94,41 +95,6 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
             'message' => 'User was not created',
         ]);
 
-//        $token = Str::random(40);
-//        $model->tokens()->create([
-//            'token' => Hash::make($token),
-//            'validate_till' => Carbon::now()->addDays(1)
-//        ]);
     }
-
-//    /**
-//     * Logout user.
-//     *
-//     * @param \Illuminate\Http\Request $request
-//     *
-//     * @return \Illuminate\Http\Response
-//     */
-//    public function logout(Request $request)
-//    {
-//
-//        if (Auth::user()) {
-//            Auth::logout();
-//
-//            $request->session()->invalidate();
-//            $request->session()->regenerateToken();
-//        }
-//        return redirect()->route('login-view', app()->getLocale());
-//    }
-
-    protected function getLocalization(string $lang)
-    {
-        $localization = Language::where('abbreviation', $lang)->first();
-        if (!$localization) {
-            throw new Exception('Localization not exist.');
-        }
-
-        return $localization;
-    }
-
 
 }
